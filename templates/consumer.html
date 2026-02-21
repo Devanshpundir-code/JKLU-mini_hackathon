@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedApple · Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f9fbf8; color: #1f2e1f; line-height: 1.5; }
+        
+        :root {
+            --green-deep: #2c5f2d;
+            --green-mist: #e3f0e5;
+            --brown-earth: #8b6e4b;
+            --shadow: 0 8px 20px rgba(0, 40, 0, 0.06);
+        }
+
+        .user-profile { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: var(--green-mist); 
+            padding: 8px 20px; 
+            border-radius: 40px; 
+            border: 1px solid #c0dbc0; 
+        }
+        
+        .user-avatar { 
+            background: var(--green-deep); 
+            color: white; 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            font-size: 0.8rem; 
+        }
+
+        .product-card { 
+            background: white; 
+            border-radius: 28px; 
+            overflow: hidden; 
+            box-shadow: var(--shadow); 
+            transition: all 0.3s; 
+            border: 1px solid #e1ede0; 
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:hover { 
+            transform: translateY(-8px); 
+            border-color: #4a7c4c; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mx-auto max-w-7xl px-6">
+    <nav class="flex items-center justify-between py-6 border-b-2 border-[#d9e8d9]">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-leaf text-2xl text-[#2c5f2d]"></i>
+            <span class="text-2xl font-black text-[#2c5f2d] tracking-tighter italic">RedApple</span>
+        </div>
+        
+        <div class="flex items-center gap-8">
+            <div class="hidden md:flex gap-8 font-semibold text-gray-700">
+                <a href="#" class="hover:text-[#2c5f2d]">Marketplace</a>
+                <a href="/cart" class="relative hover:text-[#2c5f2d]">
+                    Cart 
+                    <span id="navCartCount" class="absolute -top-2 -right-6 bg-[#2c5f2d] text-white text-[10px] px-2 py-0.5 rounded-full">0</span>
+                </a>
+                <a href="/logout" class="hover:text-red-600">Logout</a>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">{{ name[0]|upper }}</div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-sm leading-none">{{ name }}</span>
+                    <span class="text-[10px] font-bold text-[#2c5f2d] uppercase tracking-widest mt-1">Consumer</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-white rounded-[32px] p-8 mt-10 shadow-sm border border-[#e4f0e2]">
+        <div class="flex items-center bg-[#f1f7f0] rounded-full p-2 pl-6 mb-8">
+            <i class="fas fa-search text-gray-400"></i>
+            <input type="text" id="searchInput" placeholder="Search crops (e.g. Tomato)..." 
+                   class="flex-1 bg-transparent border-none outline-none px-4 py-3 text-lg" oninput="renderProducts()">
+            <button class="bg-[#2c5f2d] text-white font-bold px-10 py-4 rounded-full hover:bg-[#1d421e] transition-all">
+                Search
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-bold text-[#2c5f2d] uppercase tracking-widest ml-4">Category</label>
+                <select id="filterCategory" onchange="renderProducts()" class="bg-[#f3f9f2] border border-[#c0dbc0] rounded-full px-6 py-3 outline-none font-medium">
+                    <option value="all">All Produce</option>
+                    <option value="Vegetables">Vegetables</option>
+                    <option value="Fruits">Fruits</option>
+                    <option value="Grains">Grains</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-bold text-[#2c5f2d] uppercase tracking-widest ml-4">Location</label>
+                <select id="filterLocation" onchange="renderProducts()" class="bg-[#f3f9f2] border border-[#c0dbc0] rounded-full px-6 py-3 outline-none font-medium">
+                    <option value="all">All India</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Karnataka">Karnataka</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-bold text-[#2c5f2d] uppercase tracking-widest ml-4">Price Cap (₹)</label>
+                <input type="number" id="maxPrice" value="2000" oninput="renderProducts()" 
+                       class="bg-[#f3f9f2] border border-[#c0dbc0] rounded-full px-6 py-3 outline-none font-medium">
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-3xl font-black text-[#2c5f2d] mt-12 mb-8 italic">Fresh from the Farm 🌱</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-20" id="productGrid">
+    </div>
+</div>
+
+<script>
+    // 1. DATA FROM FLASK
+    const dbProducts = [
+        {% for p in products %}
+        {
+            id: {{ p.id }},
+            name: "{{ p.name }}",
+            price: {{ p.price }},
+            farmer: "{{ p.farmer.fullname }}", 
+            location: "{{ p.state }}",
+            city: "{{ p.city }}",
+            desc: "{{ p.description }}",
+            img: "{{ p.image_filename }}",
+            category: "Vegetables"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Initialize cart from localStorage
+    let cart = JSON.parse(localStorage.getItem('agriFlowCart')) || [];
+
+    // 2. LANGUAGE ENGINE
+    const translations = {
+        en: { buy_now: "Buy Now", kg: "kg" },
+        hi: { buy_now: "अभी खरीदें", kg: "किलो" },
+        mr: { buy_now: "आत्ता खरेदी करा", kg: "किलो" }
+    };
+    const t = translations["{{ lang }}"] || translations.en;
+
+    // 3. CART LOGIC
+    window.addToCart = function(productId) {
+        const product = dbProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        const existing = cart.find(item => item.id === productId);
+        if (existing) {
+            existing.cartQty += 1;
+        } else {
+            cart.push({ ...product, cartQty: 1 });
+        }
+
+        // Save back to localStorage
+        localStorage.setItem('agriFlowCart', JSON.stringify(cart));
+        updateNavCounter();
+        alert(`${product.name} has been added to your cart!`);
+    };
+
+    function updateNavCounter() {
+        const navCount = document.getElementById('navCartCount');
+        if (navCount) {
+            const totalItems = cart.reduce((sum, item) => sum + item.cartQty, 0);
+            navCount.innerText = totalItems;
+        }
+    }
+
+    // 4. RENDER LOGIC
+    function renderProducts() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const locFilter = document.getElementById('filterLocation').value;
+        const catFilter = document.getElementById('filterCategory').value;
+        const maxP = parseFloat(document.getElementById('maxPrice').value) || 2000;
+        const grid = document.getElementById('productGrid');
+
+        const filtered = dbProducts.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(searchTerm) || p.farmer.toLowerCase().includes(searchTerm);
+            const matchesLoc = locFilter === 'all' || p.location === locFilter;
+            const matchesPrice = p.price <= maxP;
+            const matchesCat = catFilter === 'all' || p.category === catFilter;
+            return matchesSearch && matchesLoc && matchesPrice && matchesCat;
+        });
+
+        grid.innerHTML = '';
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-medium">No farmers found in this region.</div>';
+            return;
+        }
+
+        filtered.forEach(p => {
+            grid.innerHTML += `
+                <div class="product-card">
+                    <div class="h-48 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                        ${p.img ? `<img src="/static/uploads/${p.img}" class="w-full h-full object-cover">` : '<i class="fas fa-leaf text-gray-200 text-5xl"></i>'}
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <div class="text-2xl font-black text-[#8b6e4b] mb-1">₹${p.price} <small class="text-sm font-normal text-gray-400">/${t.kg}</small></div>
+                        <h3 class="text-lg font-bold text-gray-800 leading-tight mb-2">${p.name}</h3>
+                        <p class="text-xs text-gray-400 mb-4 line-clamp-2">${p.desc}</p>
+                        
+                        <div class="pt-4 border-t border-gray-50 flex flex-col gap-1 mt-auto">
+                            <div class="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-2">
+                                <i class="fas fa-user-circle text-[#2c5f2d]"></i> ${p.farmer}
+                            </div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-[#2c5f2d]"></i> ${p.city}, ${p.location}
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-[#2c5f2d] text-white font-bold py-3 rounded-xl mt-6 hover:bg-[#1d421e] transition-all" onclick="addToCart(${p.id})">
+                            <i class="fas fa-shopping-basket mr-2"></i> ${t.buy_now}
+                        </button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // Initial render
+    updateNavCounter();
+    renderProducts();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Store · RedApple</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f9fdf9; min-height: 100vh; }
+        .navbar { background-color: #1f5e3a; color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 50; }
+        .amazon-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; border-radius: 24px; border: 1px solid #e5e7eb; overflow: hidden; display: flex; flex-direction: column; }
+        .amazon-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border-color: #2e7d32; }
+        .delete-overlay { background: rgba(0, 0, 0, 0.4); backdrop-blur: 2px; opacity: 0; transition: all 0.3s ease; }
+        .amazon-card:hover .delete-overlay { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left flex items-center">
+            <div class="logo font-bold text-xl"><i class="fas fa-seedling mr-2"></i>RedApple</div>
+            <ul class="nav-links flex gap-6 ml-10">
+                <li><a href="/farmer" class="text-white/80 hover:text-white transition-all"><i class="fas fa-th-large mr-1"></i> <span data-i18n="nav_dash">Dashboard</span></a></li>
+                <li><a href="#" class="font-bold border-b-2 border-white" data-i18n="nav_shop">My Shop</a></li>
+            </ul>
+        </div>
+        <div class="nav-right flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest" data-i18n="store_manager">Store Manager</p>
+                <p class="text-sm font-bold">{{ name }}</p>
+            </div>
+            <div class="w-10 h-10 bg-green-100 text-[#1f5e3a] rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">{{ name[0]|upper }}</div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <div>
+                <span class="text-[#2e7d32] font-extrabold uppercase tracking-[0.2em] text-xs" data-i18n="manage_inv">Manage Inventory</span>
+                <h1 class="text-4xl font-black text-[#1b4b2b] mt-1 italic" data-i18n="shop_title">Your Storefront</h1>
+                <p class="text-gray-500 mt-2"><span data-i18n="active_prefix">You currently have</span> <span class="font-bold text-gray-800">{{ products|length }}</span> <span data-i18n="active_suffix">active listings.</span></p>
+            </div>
+            <a href="/farmer" class="group flex items-center gap-3 bg-[#2e7d32] text-white px-8 py-4 rounded-[20px] font-bold hover:bg-[#1b5e20] transition-all shadow-lg active:scale-95">
+                <i class="fas fa-plus"></i> <span data-i18n="btn_list">List New Item</span>
+            </a>
+        </div>
+
+        {% if not products %}
+        <div class="flex flex-col items-center justify-center py-24 bg-white rounded-[40px] border-2 border-dashed border-gray-100 text-center px-6">
+            <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6"><i class="fas fa-box-open text-4xl text-gray-200"></i></div>
+            <h2 class="text-2xl font-bold text-gray-800" data-i18n="empty_title">Your shop is empty</h2>
+            <p class="text-gray-400 mt-2 max-w-sm" data-i18n="empty_sub">List your fresh harvest products to reach thousands of consumers in your region.</p>
+            <button onclick="openAddModal()" class="mt-8 text-[#2e7d32] font-bold hover:underline" data-i18n="start_listing">Start listing now &rarr;</button>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {% for product in products %}
+            <div class="amazon-card group">
+                <div class="relative h-56 w-full bg-gray-50 overflow-hidden">
+                    {% if product.image_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-full flex flex-col items-center justify-center text-gray-300"><i class="fas fa-image text-5xl mb-2"></i></div>
+                    {% endif %}
+                    <div class="delete-overlay absolute inset-0 flex items-center justify-center opacity-0">
+                        <a href="{{ url_for('delete_product', id=product.id) }}" onclick="return confirmDelete()" class="bg-white text-red-600 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-600 hover:text-white transition-all transform hover:rotate-12">
+                            <i class="fas fa-trash-alt text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col flex-1">
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#2e7d32] transition-colors leading-tight mb-4">{{ product.name }}</h3>
+                    <div class="bg-gray-50 rounded-2xl p-4 flex items-center justify-between mt-auto">
+                        <div>
+                            <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest block" data-i18n="price_per">Price / kg</span>
+                            <span class="text-2xl font-black text-[#2e7d32]">₹{{ product.price }}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest block" data-i18n="stock_label">In Stock</span>
+                            <span class="text-sm font-bold text-gray-700">{{ product.quantity }} KG</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </main>
+
+    <script>
+        const translations = {
+            en: { nav_dash: "Dashboard", nav_shop: "My Shop", store_manager: "Store Manager", manage_inv: "Manage Inventory", shop_title: "Your Storefront", active_prefix: "You currently have", active_suffix: "active listings.", btn_list: "List New Item", empty_title: "Your shop is empty", empty_sub: "List your fresh harvest products to reach consumers.", start_listing: "Start listing now", price_per: "Price / kg", stock_label: "In Stock", delete_msg: "Are you sure you want to permanently delete this product?" },
+            hi: { nav_dash: "डैशबोर्ड", nav_shop: "मेरी दुकान", store_manager: "स्टोर मैनेजर", manage_inv: "इन्वेंट्री प्रबंधित करें", shop_title: "आपका स्टोरफ्रंट", active_prefix: "आपके पास वर्तमान में", active_suffix: "सक्रिय लिस्टिंग हैं।", btn_list: "नई वस्तु जोड़ें", empty_title: "आपकी दुकान खाली है", empty_sub: "उपभोक्ताओं तक पहुँचने के लिए अपनी ताज़ा फसल सूचीबद्ध करें।", start_listing: "अभी सूचीबद्ध करना शुरू करें", price_per: "कीमत / किलो", stock_label: "स्टॉक में", delete_msg: "क्या आप निश्चित रूप से इस उत्पाद को स्थायी रूप से हटाना चाहते हैं?" },
+            mr: { nav_dash: "डॅशबोर्ड", nav_shop: "माझे दुकान", store_manager: "स्टोअर मॅनेजर", manage_inv: "माल साठा व्यवस्थापित करा", shop_title: "तुमचे दुकान", active_prefix: "तुमच्याकडे सध्या", active_suffix: "सक्रिय उत्पादने आहेत।", btn_list: "नवीन उत्पादन जोडा", empty_title: "तुमचे दुकान रिकामे आहे", empty_sub: "ग्राहकांपर्यंत पोहोचण्यासाठी तुमची ताजी कापणी सूचीबद्ध करा।", start_listing: "आता नोंदणी सुरू करा", price_per: "किंमत / किलो", stock_label: "शिल्लक साठा", delete_msg: "तुम्हाला खात्री आहे की तुम्ही हे उत्पादन कायमचे हटवू इच्छिता?" }
+        };
+
+        const currentLang = "{{ lang }}";
+        const t = translations[currentLang] || translations.en;
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) el.innerText = t[key];
+        });
+
+        function confirmDelete() { return confirm(t.delete_msg); }
+    </script>
+</body>
+</html>

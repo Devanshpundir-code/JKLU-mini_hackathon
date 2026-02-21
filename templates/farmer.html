@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard · RedApple</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Floating Chatbot Styles */
+        #chat-window.active { display: flex; transform: scale(1); opacity: 1; }
+        .user-msg { 
+            background: #8b6e4b; color: white; align-self: flex-end; 
+            border-radius: 18px 18px 0 18px; padding: 12px; margin-bottom: 8px; max-width: 80%;
+        }
+        .bot-msg { 
+            background: white; color: #333; align-self: flex-start; 
+            border-radius: 18px 18px 18px 0; border: 1px solid #eee; padding: 10px; margin-bottom: 8px; max-width: 80%;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f9fdf9; min-height: 100vh; overflow-x: hidden; }
+
+        .navbar {
+            background-color: #1f5e3a; color: white; padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 40;
+        }
+        .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.4rem; font-style: italic; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; font-weight: 500; opacity: 0.9; transition: 0.2s; }
+        .nav-links a:hover { opacity: 1; }
+        .avatar { background-color: #c8e6c9; color: #1f5e3a; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 1300px; margin: 2.5rem auto; padding: 0 2rem; }
+        .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        
+        .card {
+            background: white; border-radius: 28px; padding: 1.8rem; border: 1px solid #dcf2de;
+            display: flex; align-items: center; gap: 1.2rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+        }
+        .card:hover { transform: translateY(-8px); border-color: #2E7D32; box-shadow: 0 20px 35px rgba(46, 125, 50, 0.12); }
+        .card-icon { width: 60px; height: 60px; background: #e9f3e9; color: #1f5e3a; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; transition: 0.3s; flex-shrink: 0; }
+        .card:hover .card-icon { background: #2E7D32; color: white; }
+
+        @media (max-width: 1024px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left flex items-center gap-10">
+            <div class="logo"><i class="fas fa-seedling"></i> RedApple</div>
+            <ul class="nav-links">
+                <li><a href="#"><i class="fas fa-th-large mr-1"></i> <span data-i18n="nav_dash">Dashboard</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-line mr-1"></i> <span data-i18n="nav_analytics">Analytics</span></a></li>
+            </ul>
+        </div>
+        <div class="nav-right flex items-center gap-4">
+            <span class="font-semibold hidden md:inline text-sm">{{ name }}</span>
+            <div class="avatar">{{ name[0]|upper }}</div>
+            <a href="/logout" class="bg-white/10 p-2 px-4 rounded-xl hover:bg-red-500 transition-all text-sm"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="page-header mb-12">
+            <h1 id="greeting" class="text-4xl font-black text-[#1b4b2b]">Good morning, {{ name }} 🌱</h1>
+            <p data-i18n="sub_header" class="text-[#5e7c5e] mt-2 font-medium">Your farm at a glance — quick actions and insights</p>
+        </div>
+
+        <div class="cards-grid">
+            <div class="card border-l-[8px] border-l-[#1f5e3a]" onclick="openModal()">
+                <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c1_t" class="font-bold text-lg text-[#1d3e2c]">Add product</h3>
+                    <p data-i18n="c1_s" class="text-sm text-[#6a8f6a]">List new harvest details</p>
+                </div>
+            </div>
+
+            <div class="card" onclick="window.location.href='/shop'">
+                <div class="card-icon"><i class="fas fa-store"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c2_t" class="font-bold text-lg text-[#1d3e2c]">View your shop</h3>
+                    <p data-i18n="c2_s" class="text-sm text-[#6a8f6a]">Your online storefront</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-coins"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c3_t" class="font-bold text-lg text-[#1d3e2c]">Profit</h3>
+                    <p data-i18n="c3_s" class="text-sm text-[#6a8f6a]">Revenue & seasonal costs</p>
+                </div>
+            </div>
+
+            <div class="card" onclick="window.location.href='/market-analysis'">
+                <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c4_t" class="font-bold text-lg text-[#1d3e2c]">Market analysis</h3>
+                    <p data-i18n="c4_s" class="text-sm text-[#6a8f6a]">Prices, demand, trends</p>
+                </div>
+            </div>
+
+            <div class="card" onclick="window.location.href='/compare'">
+                <div class="card-icon"><i class="fas fa-scale-balanced"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c5_t" class="font-bold text-lg text-[#1d3e2c]">Comparison of prices</h3>
+                    <p data-i18n="c5_s" class="text-sm text-[#6a8f6a]">Local vs regional rates</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon"><i class="fas fa-list-check"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c6_t" class="font-bold text-lg text-[#1d3e2c]">Transactions</h3>
+                    <p data-i18n="c6_s" class="text-sm text-[#6a8f6a]">History & settlements</p>
+                </div>
+            </div>
+
+            <div class="card" onclick="alert('Tutorial coming soon!')">
+                <div class="card-icon"><i class="fas fa-circle-question"></i></div>
+                <div class="card-content">
+                    <h3 data-i18n="c7_t" class="font-bold text-lg text-[#1d3e2c]">How to use</h3>
+                    <p data-i18n="c7_s" class="text-sm text-[#6a8f6a]">Help & getting started</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="productModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-[40px] w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col transform transition-all scale-95 opacity-0" id="modalContainer">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-black text-[#1f5e3a]" data-i18n="m_title">Add New Product</h2>
+                    <p class="text-xs text-gray-400 mt-1" data-i18n="m_sub">Fill in the details to list your harvest.</p>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+
+            <div class="overflow-y-auto p-8 flex-1">
+                <form action="/add_product" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col items-center cursor-pointer hover:border-[#2E7D32]">
+                            <input type="file" name="product_image" class="hidden" required onchange="document.getElementById('fn').innerText = this.files[0].name">
+                            <i class="fas fa-folder-open text-[#2E7D32] text-xl mb-2"></i>
+                            <span data-i18n="m_browse" class="text-xs font-bold">Browse Files</span>
+                            <span id="fn" class="text-[9px] text-gray-400 italic">No file chosen</span>
+                        </label>
+                        <div class="border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col items-center opacity-50 bg-gray-50">
+                            <i class="fas fa-camera text-xl mb-2"></i>
+                            <span data-i18n="m_camera" class="text-xs font-bold">Take Photo</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label data-i18n="l_name" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Product Name</label>
+                            <input type="text" id="productName" name="product_name" list="vegetable-list" placeholder="Tomato" class="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#2E7D32]" required oninput="validatePrice()">
+                            <datalist id="vegetable-list"><option value="Tomato"><option value="Potato"><option value="Wheat"></datalist>
+                        </div>
+                        <div>
+                            <label data-i18n="l_state" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Farm State</label>
+                            <select id="productState" name="state" class="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#2E7D32]" required onchange="validatePrice()">
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Gujarat">Gujarat</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label data-i18n="l_price" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Price (Per KG)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#2E7D32]">₹</span>
+                                <input type="number" id="productPrice" name="price" class="w-full bg-gray-50 p-4 pl-8 rounded-2xl outline-none" required oninput="validatePrice()">
+                            </div>
+                            <div id="priceFeedback" class="hidden mt-2 p-3 rounded-xl text-[11px] font-semibold transition-all"></div>
+                        </div>
+                        <div>
+                            <label data-i18n="l_qty" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Quantity (KG)</label>
+                            <input type="number" name="quantity" class="w-full bg-gray-50 p-4 rounded-2xl outline-none" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label data-i18n="l_city" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">City / Mandi</label>
+                        <input type="text" name="city" class="w-full bg-gray-50 p-4 rounded-2xl outline-none" required>
+                    </div>
+
+                    <div>
+    <label data-i18n="l_desc" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Description</label>
+    <textarea name="description" id="productDescription" rows="3" class="w-full bg-gray-50 p-4 rounded-2xl outline-none resize-none" placeholder="Describe quality, variety, or harvest date..." required></textarea>
+</div>
+
+                    <button type="submit" data-i18n="m_btn" class="w-full bg-[#2E7D32] text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-[#1b5e20] transition-all mt-4">List Product to Market</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div id="chat-window" class="hidden w-85 h-[480px] bg-white rounded-3xl shadow-2xl border mb-4 flex-col overflow-hidden transition-all origin-bottom-right scale-95 opacity-0">
+            <div class="bg-[#8b6e4b] p-4 text-white flex justify-between items-center">
+                <span class="font-bold text-sm"><i class="fas fa-robot mr-2"></i>RedApple Helper</span>
+                <button onclick="toggleChat()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col bg-gray-50 text-sm gap-2">
+                <div class="bot-msg shadow-sm" id="bi">Hello! I am your farm assistant.</div>
+            </div>
+            <div id="vi" class="hidden px-4 py-1 bg-amber-50 text-[10px] text-amber-700 font-bold animate-pulse text-center tracking-widest uppercase">Listening...</div>
+            <div class="p-3 bg-white border-t flex gap-2">
+                <button id="vb" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-amber-600 transition-colors shadow-sm">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <input type="text" id="ci" placeholder="Ask anything..." class="flex-1 text-sm outline-none bg-gray-50 rounded-xl px-4 border-none focus:ring-1 focus:ring-amber-500">
+                <button id="sb" class="text-amber-700 px-2 hover:scale-110 transition-transform"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <button onclick="toggleChat()" class="w-16 h-16 bg-[#8b6e4b] text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-all border-4 border-white">
+            <i class="fas fa-comment-dots text-3xl"></i>
+        </button>
+    </div>
+
+<script>
+    const translations = {
+    en: { 
+        greet: "Good morning", nav_dash: "Dashboard", nav_analytics: "Analytics", sub_header: "Your farm at a glance — quick actions and insights",
+        c1_t: "Add product", c1_s: "List new harvest details", c2_t: "View your shop", c2_s: "Your online storefront",
+        c3_t: "Profit", c3_s: "Revenue & seasonal costs", c4_t: "Market analysis", c4_s: "Prices, demand, trends",
+        c5_t: "Comparison of prices", c5_s: "Local vs regional rates", c6_t: "Transactions", c6_s: "History & settlements",
+        c7_t: "How to use", c7_s: "Help & getting started",
+        m_title: "Add New Product", m_sub: "Fill in the details to list your harvest.", m_browse: "Browse Files", m_camera: "Take Photo",
+        l_name: "Product Name", l_state: "Farm State", l_price: "Price (Per KG)", l_qty: "Quantity (KG)", 
+        l_city: "City / Village / Mandi", l_desc: "Description", m_btn: "List Product to Market",
+        bot_intro: "Hello {{ name }}! I am your RedApple helper. How can I help you manage your farm today?",
+        price_fair: "Fair Price! Matches hardcoded rates.",
+        price_high: "Caution: Above hardcoded market rate.",
+        price_low: "Bargain: Below average market rate."
+    },
+    hi: { 
+        greet: "सुप्रभात", nav_dash: "डैशबोर्ड", nav_analytics: "विश्लेषण", sub_header: "आपके खेत की एक झलक",
+        c1_t: "उत्पाद जोड़ें", c1_s: "फसल सूचीबद्ध करें", c2_t: "दुकान देखें", c2_s: "ऑनलाइन स्टोर",
+        c3_t: "लाभ", c3_s: "राजस्व और लागत", c4_t: "बाजार विश्लेषण", c4_s: "कीमतें और रुझान",
+        c5_t: "कीमतों की तुलना", c5_s: "स्थानीय बनाम क्षेत्रीय", c6_t: "लेन-देन", c6_s: "इतिहास और निपटान",
+        c7_t: "कैसे उपयोग करें", c7_s: "सहायता और शुरुआत",
+        m_title: "नया उत्पाद जोड़ें", m_sub: "अपनी फसल सूचीबद्ध करें।", m_browse: "फ़ाइलें", m_camera: "फोटो लें",
+        l_name: "नाम", l_state: "राज्य", l_price: "कीमत (प्रति किलो)", l_qty: "मात्रा", 
+        l_city: "शहर / मंडी", l_desc: "विवरण", m_btn: "सूचीबद्ध करें",
+        bot_intro: "नमस्ते {{ name }}! मैं आपकी कैसे मदद कर सकता हूँ?",
+        price_fair: "उचित मूल्य!", price_high: "सावधान: दर अधिक है।", price_low: "सौदा: दर कम है।"
+    },
+    mr: { 
+        greet: "शुभ सकाळ", nav_dash: "डॅशबोर्ड", nav_analytics: "विश्लेषण", sub_header: "तुमच्या शेतीची माहिती",
+        c1_t: "उत्पादन जोडा", c1_s: "नवीन कापणी जोडा", c2_t: "दुकान पहा", c2_s: "ऑनलाइन स्टोअर",
+        c3_t: "नफा", c3_s: "महसूल आणि खर्च", c4_t: "बाजार विश्लेषण", c4_s: "किंमती आणि कल",
+        c5_t: "किंमतींची तुलना", c5_s: "स्थानिक विरुद्ध क्षेत्रीय", c6_t: "व्यवहार", c6_s: "इतिहास आणि सेटलमेंट",
+        c7_t: "वापर कसा करायचा", c7_s: "मदत आणि सुरुवात",
+        m_title: "नवीन उत्पादन जोडा", m_sub: "तुमची कापणी सूचीबद्ध करा।", m_browse: "फाईल्स", m_camera: "फोटो",
+        l_name: "नाव", l_state: "राज्य", l_price: "किंमत (प्रति किलो)", l_qty: "प्रमाण", 
+        l_city: "शहर / मंडी", l_desc: "वर्णन", m_btn: "नोंदणी करा",
+        bot_intro: "नमस्कार {{ name }}! मी तुम्हाला कशी मदत करू शकतो?",
+        price_fair: "योग्य किंमत!", price_high: "धोका: दर जास्त आहे।", price_low: "स्वस्त: दर कमी आहे।"
+    }
+};
+
+const curL = "{{ lang }}"; const nm = "{{ name }}"; const t = translations[curL] || translations.en;
+
+// --- 1. UI INITIALIZATION ---
+document.getElementById('greeting').innerText = `${t.greet}, ${nm} 🌱`;
+document.getElementById('bi').innerText = t.bot_intro.replace("{{ name }}", nm);
+document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.innerText = t[key];
+});
+
+// --- 2. PRICE VALIDATION LOGIC ---
+async function validatePrice() {
+    const crop = document.getElementById('productName').value;
+    const state = document.getElementById('productState').value;
+    const price = parseFloat(document.getElementById('productPrice').value);
+    const feedback = document.getElementById('priceFeedback');
+
+    if (!crop || !price) { feedback.classList.add('hidden'); return; }
+
+    try {
+        const r = await fetch(`/get_price_suggestion?crop=${crop}&state=${state}`);
+        const d = await r.json();
+        const target = d.mandi_avg;
+
+        if (target === 0) { feedback.classList.add('hidden'); return; }
+
+        feedback.classList.remove('hidden');
+        if (price > target + 5) {
+            feedback.innerText = `⚠️ ${t.price_high} (Target: ₹${target})`;
+            feedback.className = "mt-2 p-3 rounded-xl text-[11px] font-semibold bg-red-50 text-red-600 block";
+        } else if (price < target - 5) {
+            feedback.innerText = `✅ ${t.price_low} (Target: ₹${target})`;
+            feedback.className = "mt-2 p-3 rounded-xl text-[11px] font-semibold bg-blue-50 text-blue-600 block";
+        } else {
+            feedback.innerText = `✨ ${t.price_fair}`;
+            feedback.className = "mt-2 p-3 rounded-xl text-[11px] font-semibold bg-green-50 text-green-600 block";
+        }
+    } catch (e) { feedback.classList.add('hidden'); }
+}
+
+// --- 3. CHATBOT ENGINE ---
+async function sendMessage() {
+    const i = document.getElementById('ci'); const m = i.value.trim(); if(!m) return;
+    appendMsg(m, 'user-msg'); i.value = ''; const l = appendMsg('...', 'bot-msg');
+    try {
+        const r = await fetch('/chat', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: `[Language: ${curL}] ` + m})
+        });
+        const d = await r.json(); 
+        l.innerText = d.choices[0].message.content;
+    } catch { l.innerText = "Error connecting to agriFlow Helper."; }
+}
+
+function appendMsg(txt, cls) {
+    const d = document.createElement('div'); d.className = cls; d.innerText = txt;
+    const msgs = document.getElementById('chat-messages'); msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight; return d;
+}
+
+// --- 4. STABILIZED VOICE LOGIC (AUTO-RESTART) ---
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRecognition();
+    rec.lang = curL === 'hi' ? 'hi-IN' : (curL === 'mr' ? 'mr-IN' : 'en-US');
+    rec.interimResults = true;
+    rec.continuous = false; 
+
+    let isListening = false;
+    let manualStop = false;
+
+    rec.onstart = () => {
+        isListening = true;
+        manualStop = false;
+        document.getElementById('vi').classList.remove('hidden');
+        document.getElementById('vb').classList.add('text-amber-600', 'animate-pulse');
+    };
+
+    rec.onresult = (e) => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+        document.getElementById('ci').value = transcript;
+    };
+
+    rec.onend = () => {
+        isListening = false;
+        // Auto-Restart if browser stopped it prematurely without a user click
+        if (!manualStop && document.getElementById('ci').value.trim() === "") {
+            rec.start(); 
+            return;
+        }
+        document.getElementById('vi').classList.add('hidden');
+        document.getElementById('vb').classList.remove('text-amber-600', 'animate-pulse');
+        if (document.getElementById('ci').value.trim() !== "" && !manualStop) sendMessage();
+    };
+
+    document.getElementById('vb').onclick = () => {
+        if (!isListening) {
+            manualStop = false;
+            document.getElementById('ci').value = ""; 
+            rec.start();
+        } else {
+            manualStop = true;
+            rec.stop();
+        }
+    };
+}
+
+// --- 5. MODAL & UI HANDLERS ---
+function toggleChat() { 
+    const w = document.getElementById('chat-window'); 
+    w.classList.toggle('hidden'); 
+    setTimeout(() => w.classList.toggle('active'), 10); 
+}
+
+function openModal() {
+    const m = document.getElementById('productModal'); const c = document.getElementById('modalContainer');
+    m.classList.remove('hidden'); 
+    setTimeout(() => { c.classList.remove('scale-95', 'opacity-0'); c.classList.add('scale-100', 'opacity-100'); }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    const m = document.getElementById('productModal'); const c = document.getElementById('modalContainer');
+    c.classList.remove('scale-100', 'opacity-100'); c.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => m.classList.add('hidden'), 300); 
+    document.body.style.overflow = 'auto';
+}
+
+document.getElementById('sb').onclick = sendMessage;
+document.getElementById('ci').onkeydown = (e) => { if(e.key === 'Enter') sendMessage(); };
+</script>
+</body>
+</html>

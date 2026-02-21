@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitor Insights · agriFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f9fdf9; min-height: 100vh; }
+        .navbar { background-color: #1f5e3a; color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .search-container { background: white; border-radius: 35px; box-shadow: 0 20px 40px rgba(0,0,0,0.04); border: 1px solid #edf5ed; }
+        .table-container { border-radius: 30px; overflow: hidden; background: white; border: 1px solid #e5e7eb; }
+        .my-listing-row { background-color: #f0fdf4 !important; border-left: 6px solid #22c55e; }
+        .toggle-btn { transition: all 0.3s; border: 2px solid #e5e7eb; }
+        input:checked + .toggle-btn { background-color: #2e7d32; border-color: #2e7d32; color: white; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left flex items-center gap-4">
+            <div class="logo font-bold text-xl"><i class="fas fa-seedling mr-2"></i>agriFlow</div>
+            <a href="/farmer" class="ml-6 text-sm opacity-80 hover:opacity-100 transition-all"><i class="fas fa-arrow-left mr-1"></i> <span data-i18n="nav_dash">Dashboard</span></a>
+        </div>
+        <div class="nav-right font-bold text-sm bg-white/10 px-4 py-2 rounded-full">{{ name }}</div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <div class="mb-10 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl font-extrabold text-[#1b4b2b] tracking-tight" data-i18n="comp_title">Competitor Analysis</h1>
+                <p class="text-gray-500 mt-1" data-i18n="comp_sub">See how other farmers are pricing the same crop.</p>
+            </div>
+            {% if my_price %}
+            <div class="bg-white p-4 rounded-2xl border border-green-100 shadow-sm">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center" data-i18n="your_price">Your Current Price</p>
+                <p class="text-2xl font-black text-[#2e7d32] text-center">₹{{ my_price }}<span class="text-xs font-normal">/kg</span></p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="search-container p-8 mb-12">
+            <form action="/compare" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+                <div class="relative">
+                    <label class="text-[10px] font-bold text-gray-400 absolute top-3 left-12 uppercase" data-i18n="l_prod">Product</label>
+                    <i class="fas fa-carrot absolute left-5 top-1/2 -translate-y-1/2 text-[#2e7d32]"></i>
+                    <input type="text" name="product" placeholder="Tomato" value="{{ search_query or '' }}" class="w-full pl-12 pr-4 pt-7 pb-3 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#2e7d32]" required>
+                </div>
+
+                <div class="relative">
+                    <label class="text-[10px] font-bold text-gray-400 absolute top-3 left-12 uppercase" data-i18n="l_region">Region</label>
+                    <i class="fas fa-globe absolute left-5 top-1/2 -translate-y-1/2 text-[#2e7d32]"></i>
+                    <select name="state" class="w-full pl-12 pr-4 pt-7 pb-3 bg-gray-50 rounded-2xl outline-none appearance-none font-semibold">
+                        <option value="All India" data-i18n="opt_all">All India</option>
+                        <option value="Maharashtra" {% if state_query == 'Maharashtra' %}selected{% endif %}>Maharashtra</option>
+                        <option value="Gujarat" {% if state_query == 'Gujarat' %}selected{% endif %}>Gujarat</option>
+                        <option value="Rajasthan" {% if state_query == 'Rajasthan' %}selected{% endif %}>Rajasthan</option>
+                    </select>
+                </div>
+
+                <div class="relative">
+                    <label class="text-[10px] font-bold text-gray-400 absolute -top-6 left-2 uppercase" data-i18n="l_prox">Proximity</label>
+                    <div class="flex bg-gray-50 p-1 rounded-2xl border border-gray-100">
+                        <label class="flex-1 text-center">
+                            <input type="radio" name="proximity" value="All" class="hidden" {% if proximity_filter != 'Nearby' %}checked{% endif %}>
+                            <div class="toggle-btn py-3 rounded-xl cursor-pointer text-xs font-bold text-gray-500" data-i18n="prox_all">All India</div>
+                        </label>
+                        <label class="flex-1 text-center">
+                            <input type="radio" name="proximity" value="Nearby" class="hidden" {% if proximity_filter == 'Nearby' %}checked{% endif %}>
+                            <div class="toggle-btn py-3 rounded-xl cursor-pointer text-xs font-bold text-gray-500" data-i18n="prox_near">Nearby Only</div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="bg-[#2e7d32] text-white font-black h-[68px] rounded-2xl hover:bg-[#1b5e20] shadow-xl transition-all" data-i18n="btn_comp">Compare Now</button>
+            </form>
+        </div>
+
+        {% if search_query %}
+            <div class="table-container shadow-2xl">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                        <tr>
+                            <th class="p-6" data-i18n="th_farmer">Farmer</th>
+                            <th class="p-6 text-center" data-i18n="th_dist">Distance</th>
+                            <th class="p-6" data-i18n="th_price">Price</th>
+                            <th class="p-6" data-i18n="th_gap">Market Gap</th>
+                            <th class="p-6" data-i18n="th_stat">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for item in results %}
+                        <tr class="{% if item.farmer_id == current_user_id %}my-listing-row{% endif %}">
+                            <td class="p-6">
+                                <span class="font-bold text-gray-800">{{ item.farmer.fullname }}</span>
+                                {% if item.farmer_id == current_user_id %}<span class="ml-2 bg-green-600 text-white text-[9px] px-2 py-0.5 rounded-full uppercase" data-i18n="badge_you">You</span>{% endif %}
+                                <p class="text-[10px] text-gray-400">{{ item.city }}, {{ item.state }}</p>
+                            </td>
+                            <td class="p-6 text-center text-xs font-medium text-gray-400"><i class="fas fa-map-marker-alt mr-1"></i> <span data-i18n="local_tag">Local</span></td>
+                            <td class="p-6"><span class="text-2xl font-black text-gray-800">₹{{ item.price }}</span></td>
+                            <td class="p-6">
+                                {% if my_price and item.farmer_id != current_user_id %}
+                                    {% set gap = item.price - my_price %}
+                                    {% if gap > 0 %}
+                                        <span class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">+₹{{ gap }} <span data-i18n="gap_more">(More Expensive)</span></span>
+                                    {% elif gap < 0 %}
+                                        <span class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">-₹{{ gap|abs }} <span data-i18n="gap_less">(Cheaper)</span></span>
+                                    {% else %}
+                                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg" data-i18n="gap_same">Same as yours</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-xs text-gray-300">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-6">{% if loop.first %}<span class="text-[10px] font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full uppercase" data-i18n="stat_cheapest">Cheapest</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </main>
+
+    <script>
+        const translations = {
+            en: { nav_dash: "Dashboard", comp_title: "Competitor Analysis", comp_sub: "See how other farmers are pricing.", your_price: "Your Price", l_prod: "Product", l_region: "Region", opt_all: "All India", l_prox: "Proximity", prox_all: "All India", prox_near: "Nearby Only", btn_comp: "Compare Now", th_farmer: "Farmer", th_dist: "Distance", th_price: "Price", th_gap: "Market Gap", th_stat: "Status", badge_you: "You", local_tag: "Local", gap_more: "(More Expensive)", gap_less: "(Cheaper)", gap_same: "Same as yours", stat_cheapest: "Cheapest" },
+            hi: { nav_dash: "डैशबोर्ड", comp_title: "प्रतियोगी विश्लेषण", comp_sub: "देखें कि अन्य किसान क्या कीमतें तय कर रहे हैं।", your_price: "आपकी कीमत", l_prod: "उत्पाद", l_region: "क्षेत्र", opt_all: "पूरा भारत", l_prox: "निकटता", prox_all: "पूरा भारत", prox_near: "केवल पास के", btn_comp: "तुलना करें", th_farmer: "किसान", th_dist: "दूरी", th_price: "कीमत", th_gap: "बाजार का अंतर", th_stat: "स्थिति", badge_you: "आप", local_tag: "स्थानीय", gap_more: "(अधिक महंगा)", gap_less: "(सस्ता)", gap_same: "आपके जैसा ही", stat_cheapest: "सबसे सस्ता" },
+            mr: { nav_dash: "डॅशबोर्ड", comp_title: "स्पर्धक विश्लेषण", comp_sub: "इतर शेतकरी कशी किंमत ठरवत आहेत ते पहा।", your_price: "तुमची किंमत", l_prod: "उत्पादन", l_region: "प्रदेश", opt_all: "पूर्ण भारत", l_prox: "निकटता", prox_all: "पूर्ण भारत", prox_near: "फक्त जवळचे", btn_comp: "आता तुलना करा", th_farmer: "शेतकरी", th_dist: "अंतर", th_price: "किंमत", th_gap: "बाजारातील तफावत", th_stat: "स्थिती", badge_you: "तुम्ही", local_tag: "स्थानिक", gap_more: "(महाग आहे)", gap_less: "(स्वस्त आहे)", gap_same: "तुमच्यासारखेच", stat_cheapest: "सर्वात स्वस्त" }
+        };
+
+        const curL = "{{ lang }}";
+        const t = translations[curL] || translations.en;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) el.innerText = t[key];
+        });
+
+        document.querySelectorAll('input[name="proximity"]').forEach(r => {
+            r.addEventListener('change', () => r.closest('form').submit());
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kisan Connect - {{ role|capitalize }} Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet" />
+    <style>
+        body { font-family: "Plus Jakarta Sans", sans-serif; }
+        .auth-container { width: 850px; max-width: 95vw; min-height: 600px; border-radius: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
+        .form-container { position: absolute; top: 0; height: 100%; transition: all 0.6s ease-in-out; background-color: white; }
+        .sign-in-container { left: 0; width: 50%; z-index: 2; opacity: 1; }
+        .sign-up-container { left: 0; width: 50%; opacity: 0; z-index: 1; }
+        .auth-container.active .sign-in-container { transform: translateX(100%); opacity: 0; z-index: 1; }
+        .auth-container.active .sign-up-container { transform: translateX(100%); opacity: 1; z-index: 5; }
+        .overlay-container { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden; transition: transform 0.6s ease-in-out; z-index: 100; }
+        .auth-container.active .overlay-container { transform: translateX(-100%); }
+        .overlay { background: #2e7d32; color: #ffffff; position: relative; left: -100%; height: 100%; width: 200%; transform: translateX(0); transition: transform 0.6s ease-in-out; }
+        .auth-container.active .overlay { transform: translateX(50%); }
+        .overlay-panel { position: absolute; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0 40px; text-align: center; top: 0; height: 100%; width: 50%; transition: transform 0.6s ease-in-out; }
+        .overlay-left { transform: translateX(-20%); }
+        .auth-container.active .overlay-left { transform: translateX(0); }
+        .overlay-right { right: 0; transform: translateX(0); }
+        .auth-container.active .overlay-right { transform: translateX(20%); }
+        .custom-input { border: 2px solid #f3f4f6; transition: all 0.2s ease; appearance: none; }
+        .custom-input:focus { border-color: #2e7d32; background: white; }
+    </style>
+</head>
+<body class="bg-[#F8FAF8] flex items-center justify-center min-h-screen p-4">
+    <div class="auth-container relative bg-white overflow-hidden" id="container">
+        
+        <div class="form-container sign-up-container p-10 flex flex-col justify-center">
+            <h1 data-i18n="signup_title" class="text-3xl font-extrabold text-[#2E7D32] mb-1">Create Account</h1>
+            <p data-i18n="signup_sub" class="text-gray-400 text-xs mb-6">Join the decentralized network.</p>
+            <form action="/signup" method="POST" class="flex flex-col gap-3">
+                <input type="hidden" name="user_type" value="{{ role }}" />
+                <input type="hidden" name="lang" value="{{ lang }}" /> <input type="text" name="fullname" placeholder="Full Name" class="custom-input bg-gray-50 p-3 rounded-xl outline-none" required />
+                <input type="tel" name="phone" placeholder="Phone Number" class="custom-input bg-gray-50 p-3 rounded-xl outline-none" required />
+                <select name="state" class="custom-input bg-gray-50 p-3 rounded-xl outline-none text-gray-500" required>
+                    <option value="" disabled selected>Select Your State</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    </select>
+                <input type="password" name="password" placeholder="Password" class="custom-input bg-gray-50 p-3 rounded-xl outline-none" required />
+                <button type="submit" data-i18n="signup_btn" class="bg-[#2E7D32] text-white py-3 rounded-xl font-bold mt-2 hover:bg-[#1B5E20] shadow-lg transition-all">Sign Up</button>
+            </form>
+        </div>
+
+        <div class="form-container sign-in-container p-10 flex flex-col justify-center">
+            <h1 data-i18n="login_title" class="text-3xl font-extrabold text-[#2E7D32] mb-2">Welcome Back</h1>
+            <p class="text-gray-400 text-sm mb-8"><span data-i18n="login_as">Sign in as a</span> {{ role }}.</p>
+            <form action="/login" method="POST" class="flex flex-col gap-4">
+                <input type="tel" name="phone" placeholder="Phone Number" class="custom-input bg-gray-50 p-4 rounded-2xl outline-none" required />
+                <input type="password" name="password" placeholder="Password" class="custom-input bg-gray-50 p-4 rounded-2xl outline-none" required />
+                <button type="submit" data-i18n="login_btn" class="bg-[#2E7D32] text-white py-4 rounded-2xl font-bold mt-2 shadow-lg transition-all">Login</button>
+            </form>
+        </div>
+
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1 data-i18n="already_member" class="text-3xl font-bold mb-4">Already a Member?</h1>
+                    <button class="border-2 border-white px-12 py-2 rounded-full font-bold hover:bg-white hover:text-[#2E7D32] transition" id="signIn" data-i18n="sign_in_nav">Sign In</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1 data-i18n="new_here" class="text-3xl font-bold mb-4">New here?</h1>
+                    <button class="border-2 border-white px-12 py-2 rounded-full font-bold hover:bg-white hover:text-[#2E7D32] transition" id="signUp" data-i18n="sign_up_nav">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TRANSLATION ENGINE
+        const translations = {
+            en: {
+                signup_title: "Create Account", signup_sub: "Join the decentralized network.", signup_btn: "Sign Up",
+                login_title: "Welcome Back", login_as: "Sign in as a", login_btn: "Login",
+                already_member: "Already a Member?", sign_in_nav: "Sign In",
+                new_here: "New here?", sign_up_nav: "Sign Up"
+            },
+            hi: {
+                signup_title: "खाता बनाएं", signup_sub: "विकेंद्रीकृत नेटवर्क से जुड़ें।", signup_btn: "साइन अप करें",
+                login_title: "वापसी पर स्वागत है", login_as: "के रूप में साइन इन करें", login_btn: "लॉगिन",
+                already_member: "पहले से सदस्य हैं?", sign_in_nav: "साइन इन करें",
+                new_here: "यहाँ नए हैं?", sign_up_nav: "साइन अप करें"
+            },
+            mr: {
+                signup_title: "खाते तयार करा", signup_sub: "विकेंद्रित नेटवर्कमध्ये सामील व्हा.", signup_btn: "साइन अप करा",
+                login_title: "पुन्हा स्वागत आहे", login_as: "म्हणून साइन इन करा", login_btn: "लॉगिन",
+                already_member: "आधीच सदस्य आहात?", sign_in_nav: "साइन इन करा",
+                new_here: "नवीन आहात?", sign_up_nav: "साइन अप करा"
+            }
+        };
+
+        const currentLang = "{{ lang }}";
+        const t = translations[currentLang] || translations.en;
+
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+            const key = el.getAttribute("data-i18n");
+            if (t[key]) el.innerText = t[key];
+        });
+
+        // SLIDING LOGIC
+        const container = document.getElementById("container");
+        document.getElementById("signUp").onclick = () => container.classList.add("active");
+        document.getElementById("signIn").onclick = () => container.classList.remove("active");
+    </script>
+</body>
+</html>
